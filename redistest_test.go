@@ -1,4 +1,4 @@
-package redistest_test
+package redistest
 
 import (
 	"fmt"
@@ -7,8 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/redis.v5"
-
-	. "github.com/masatomizuta/go-redistest"
 )
 
 func TestRunMasterServer(t *testing.T) {
@@ -57,7 +55,7 @@ func TestServer_RunSlaveServer(t *testing.T) {
 	c.Close()
 
 	// Wait for the replication sync
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	c = redis.NewClient(&redis.Options{Addr: fmt.Sprintf(":%d", DefaultSlavePort)})
 	bar, err := c.Get("foo").Result()
