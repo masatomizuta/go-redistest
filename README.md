@@ -1,4 +1,6 @@
-# go-redistest 
+# go-redistest
+
+[![Build Status](https://travis-ci.org/masatomizuta/go-redistest.svg?branch=master)](https://travis-ci.org/masatomizuta/go-redistest)
 
 go-redistest controls Redis server instance to be used in unit tests for Golang.
 You don't need to start instances outside the unit test code manually.
