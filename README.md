@@ -38,7 +38,6 @@ if err != nil {
     panic(err)
 }
 defer master.Stop()
-// Do your tests using Redis server
 ```
 
 ### Run a slave server
