@@ -106,3 +106,24 @@ func TestServer_Port(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, DefaultMasterPort, s.Port())
 }
+
+func TestServer_Flush(t *testing.T) {
+	s, err := RunServer(DefaultMasterPort)
+	defer s.Stop()
+
+	c := s.NewClient()
+	defer c.Close()
+
+	c.Set("foo", "bar", 0)
+
+	n, err := c.DbSize().Result()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, int(n))
+
+	err = s.Flush()
+	assert.NoError(t, err)
+
+	n, err = c.DbSize().Result()
+	assert.NoError(t, err)
+	assert.Zero(t, n)
+}

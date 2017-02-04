@@ -82,7 +82,7 @@ func runServer(port int, cmd *exec.Cmd) (*Server, error) {
 }
 
 func (s *Server) IsRunning() bool {
-	c := redis.NewClient(&redis.Options{Addr: fmt.Sprintf(":%d", s.port)})
+	c := s.NewClient()
 	defer c.Close()
 
 	pong, _ := c.Ping().Result()
@@ -127,4 +127,15 @@ func (s *Server) Port() int {
 
 func (s *Server) Addr() string {
 	return fmt.Sprintf("localhost:%d", s.port)
+}
+
+func (s *Server) Flush() error {
+	c := s.NewClient()
+	defer c.Close()
+
+	return c.FlushAll().Err()
+}
+
+func (s *Server) NewClient() *redis.Client {
+	return redis.NewClient(&redis.Options{Addr: fmt.Sprintf(":%d", s.port)})
 }
