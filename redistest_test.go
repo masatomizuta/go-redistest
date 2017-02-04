@@ -107,6 +107,14 @@ func TestServer_Port(t *testing.T) {
 	assert.Equal(t, DefaultMasterPort, s.Port())
 }
 
+func TestServer_Addr(t *testing.T) {
+	s, err := RunServer(DefaultMasterPort)
+	defer s.Stop()
+
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("localhost:%d", DefaultMasterPort), s.Addr())
+}
+
 func TestServer_Flush(t *testing.T) {
 	s, err := RunServer(DefaultMasterPort)
 	defer s.Stop()
