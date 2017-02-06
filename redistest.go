@@ -3,11 +3,11 @@ package redistest
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
 	"gopkg.in/redis.v5"
-	"io/ioutil"
 )
 
 type ServerType int
@@ -54,19 +54,33 @@ func (s *Server) RunSlaveServer(port int) (*Server, error) {
 }
 
 func (s *Server) RunSentinelServer(port int, masterName string) (*Server, error) {
-	// Generate a sentinel conf
-	conf := fmt.Sprintf("sentinel monitor %s localhost %d 1", masterName, s.port)
-	path := fmt.Sprintf("/tmp/redis_test.%d.%d.conf", port, time.Now().UnixNano())
-	if err := ioutil.WriteFile(path, []byte(conf), 0644); err != nil {
-		return nil, err
-	}
-
 	cmd := exec.Command(redisServerExe,
-		path,
+		os.DevNull,
 		"--port", fmt.Sprintf("%d", port),
 		"--sentinel",
 	)
-	return runServer(port, cmd)
+	sentinel, err := runServer(port, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	c := sentinel.NewClient()
+	defer c.Close()
+
+	for _, cmd := range []*redis.StatusCmd{
+		redis.NewStatusCmd("SENTINEL", "MONITOR", masterName, "127.0.0.1", s.port, "1"),
+		redis.NewStatusCmd("SENTINEL", "SET", masterName, "down-after-milliseconds", "500"),
+		redis.NewStatusCmd("SENTINEL", "SET", masterName, "failover-timeout", "1000"),
+		redis.NewStatusCmd("SENTINEL", "SET", masterName, "parallel-syncs", "1"),
+	} {
+		c.Process(cmd)
+		if err := cmd.Err(); err != nil {
+			sentinel.Stop()
+			return nil, err
+		}
+	}
+
+	return sentinel, err
 }
 
 func runServer(port int, cmd *exec.Cmd) (*Server, error) {

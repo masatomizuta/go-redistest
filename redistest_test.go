@@ -74,6 +74,9 @@ func TestServer_RunSentinelServer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, s.IsRunning())
 
+	_, err = m.RunSentinelServer(DefaultSentinelPort, DefaultSentinelMaster)
+	assert.Error(t, err)
+
 	c := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    DefaultSentinelMaster,
 		SentinelAddrs: []string{fmt.Sprintf("localhost:%d", DefaultSentinelPort)},
