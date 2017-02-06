@@ -31,26 +31,41 @@ type Server struct {
 	cmd        *exec.Cmd
 	currentCmd exec.Cmd
 	port       int
+	dbfile     string
 	done       chan bool
 }
 
 func RunServer(port int) (*Server, error) {
+	dbfile := fmt.Sprintf("redis_test.%d.%d.rdb", port, time.Now().UnixNano())
+
 	cmd := exec.Command(redisServerExe,
 		"--port", fmt.Sprintf("%d", port),
 		"--dir", "/tmp",
-		"--dbfilename", fmt.Sprintf("redis_test.%d.%d.rdb", port, time.Now().UnixNano()),
+		"--dbfilename", dbfile,
 	)
-	return runServer(port, cmd)
+	s, err := runServer(port, cmd)
+	if err != nil {
+		return nil, err
+	}
+	s.dbfile = dbfile
+	return s, nil
 }
 
 func (s *Server) RunSlaveServer(port int) (*Server, error) {
+	dbfile := fmt.Sprintf("redis_test.%d.%d.rdb", port, time.Now().UnixNano())
+
 	cmd := exec.Command(redisServerExe,
 		"--port", fmt.Sprintf("%d", port),
 		fmt.Sprintf("--slaveof localhost %d", s.port),
 		"--dir", "/tmp",
-		"--dbfilename", fmt.Sprintf("redis_test.%d.%d.rdb", port, time.Now().UnixNano()),
+		"--dbfilename", dbfile,
 	)
-	return runServer(port, cmd)
+	s, err := runServer(port, cmd)
+	if err != nil {
+		return nil, err
+	}
+	s.dbfile = dbfile
+	return s, nil
 }
 
 func (s *Server) RunSentinelServer(port int, masterName string) (*Server, error) {
@@ -132,6 +147,10 @@ func (s *Server) Stop() error {
 		return err
 	}
 	<-s.done
+
+	if s.dbfile != "" {
+		os.Remove("/tmp/" + s.dbfile)
+	}
 	return nil
 }
 
