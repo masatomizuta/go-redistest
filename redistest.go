@@ -10,14 +10,6 @@ import (
 	"gopkg.in/redis.v5"
 )
 
-type ServerType int
-
-const (
-	Master ServerType = iota
-	Slave
-	Sentinel
-)
-
 const redisServerExe = "redis-server"
 
 const (
